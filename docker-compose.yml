@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./adminpanel
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend1
+      - backend2
+
+  backend1:
+    build:
+      context: ./khasimansa
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/khasimansa
+      SPRING_DATASOURCE_USERNAME: khasimansa
+      SPRING_DATASOURCE_PASSWORD: root
+    depends_on:
+      - db
+
+  backend2:
+    build:
+      context: ./khasimansaproduct
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/khasimansa
+      SPRING_DATASOURCE_USERNAME: khasimansa
+      SPRING_DATASOURCE_PASSWORD: root
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: khasimansa
+      POSTGRES_USER: khasimansa
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5432:5432"
