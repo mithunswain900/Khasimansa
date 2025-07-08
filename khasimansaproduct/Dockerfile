@@ -12,6 +12,10 @@ RUN gradle bootJar --no-daemon
 FROM openjdk:17-jdk-slim
 WORKDIR /app
 
+COPY entrypoint.sh entrypoint.sh
+RUN chmod +x entrypoint.sh
+#ENTRYPOINT ["./entrypoint.sh"]
+
 # Copy the JAR from the builder image
 COPY --from=builder /app/build/libs/*.jar app.jar
 

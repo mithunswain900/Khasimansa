@@ -8,8 +8,14 @@ services:
     ports:
       - "5173:5173"
     depends_on:
-      - backend1
-      - backend2
+      backend1:
+        condition: service_started
+      backend2:
+        condition: service_started
+      apigateway:
+        condition: service_started
+    networks:
+      - khasimansa-network
 
   backend1:
     build:
@@ -21,8 +27,14 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/khasimansa
       SPRING_DATASOURCE_USERNAME: khasimansa
       SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8761/eureka
     depends_on:
-      - db
+      db:
+        condition: service_started
+      eurekaserver:
+        condition: service_healthy
+    networks:
+      - khasimansa-network
 
   backend2:
     build:
@@ -34,8 +46,33 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/khasimansa
       SPRING_DATASOURCE_USERNAME: khasimansa
       SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8761/eureka
+
     depends_on:
-      - db
+      db:
+        condition: service_started
+      eurekaserver:
+        condition: service_healthy
+    networks:
+      - khasimansa-network
+
+  apigateway:
+    build:
+      context: ./khasimansaApiGateWay
+      dockerfile: Dockerfile
+    ports:
+      - "8088:8088"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8761/eureka
+    depends_on:
+      backend1:
+        condition: service_started
+      backend2:
+        condition: service_started
+      eurekaserver:
+        condition: service_healthy
+    networks:
+      - khasimansa-network
 
   db:
     image: postgres:15
@@ -46,3 +83,25 @@ services:
       POSTGRES_PASSWORD: root
     ports:
       - "5432:5432"
+    networks:
+      - khasimansa-network
+
+  eurekaserver:
+    build:
+      context: ./khasimansaEurekaServer
+      dockerfile: Dockerfile
+    ports:
+      - "8761:8761"
+    hostname: eurekaserver
+    networks:
+      - khasimansa-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:8761/eureka/apps || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+networks:
+  khasimansa-network:
+    driver: bridge

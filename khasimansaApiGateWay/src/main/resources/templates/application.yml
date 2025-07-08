@@ -1,0 +1,28 @@
+server:
+  port: 8088
+spring:
+  application:
+    name: KHASIMANSAAPIGATEWAY
+  main:
+    web-application-type: reactive
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lowerCaseServiceId: true
+      routes:
+        - id: backend2
+          uri: lb://khasimansabackend2
+          predicates:
+            - Path=/api/products/**
+        - id: backend1
+          uri: lb://khasimansabackend1
+          predicates:
+            - Path=/api/**
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://eurekaserver:8761/eureka
